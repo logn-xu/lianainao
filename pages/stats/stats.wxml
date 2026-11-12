@@ -1,0 +1,89 @@
+<view class="page">
+  <view class="month-bar">
+    <view class="nav-btn" hover-class="nav-hover" bindtap="prevMonth">‹</view>
+    <text class="month-title">{{monthLabel}}</text>
+    <view class="nav-btn {{canNext ? '' : 'disabled'}}" bindtap="nextMonth">›</view>
+  </view>
+
+  <view class="summary">
+    <view class="sum-card milk">
+      <text class="sum-num">{{summary.milktea}}</text>
+      <text class="sum-label">杯奶茶</text>
+    </view>
+    <view class="sum-card snack">
+      <text class="sum-num">{{summary.snack}}</text>
+      <text class="sum-label">次放纵</text>
+    </view>
+    <view class="sum-card sport">
+      <text class="sum-num">{{summary.sport}}</text>
+      <text class="sum-label">次运动</text>
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="card-title">这个月的甜与放纵</view>
+    <view class="card-sub">{{monthLabel}}共记录 {{summary.total}} 条</view>
+
+    <view class="week-head">
+      <text class="week-cell" wx:for="{{weekHead}}" wx:key="*this">{{item}}</text>
+    </view>
+    <view class="calendar">
+      <view class="cal-cell" wx:for="{{cells}}" wx:key="key">
+        <view
+          class="cal-inner lv{{item.level}} {{item.today ? 'is-today' : ''}} {{item.period ? 'has-period' : ''}}"
+        >{{item.day || ''}}</view>
+      </view>
+    </view>
+    <view class="legend">
+      <text class="legend-text">少</text>
+      <view class="lg lv0"></view>
+      <view class="lg lv1"></view>
+      <view class="lg lv2"></view>
+      <view class="lg lv3"></view>
+      <text class="legend-text">多</text>
+      <view class="legend-spacer"></view>
+      <view class="lg period-mark"></view>
+      <text class="legend-text">姨妈日</text>
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="card-title">姨妈小日历</view>
+    <block wx:if="{{periodView}}">
+      <view class="rows">
+        <view class="stat-row">
+          <text class="sr-label">上次开始</text>
+          <text class="sr-value">{{periodView.lastText}} · {{periodView.sinceText}}</text>
+        </view>
+        <view class="stat-row">
+          <text class="sr-label">平均周期</text>
+          <text class="sr-value">{{periodView.cycle}} 天</text>
+        </view>
+        <view class="stat-row">
+          <text class="sr-label">预计下次</text>
+          <text class="sr-value accent">{{periodView.nextText}} · {{periodView.untilText}}</text>
+        </view>
+      </view>
+      <view class="history">
+        <text class="history-label">最近记录</text>
+        <view class="history-list">
+          <text class="h-chip" wx:for="{{periodView.history}}" wx:key="*this">{{item}}</text>
+        </view>
+      </view>
+      <view class="footnote">预测仅供参考，提前准备好热水和甜的东西。</view>
+    </block>
+    <view class="footnote" wx:else>还没有记录过，去「日常」点一下小花记一笔吧。</view>
+  </view>
+
+  <view class="card streak-card">
+    <view class="streak-item">
+      <text class="streak-num">{{streak.current}}</text>
+      <text class="streak-label">连续记录（天）</text>
+    </view>
+    <view class="streak-div"></view>
+    <view class="streak-item">
+      <text class="streak-num">{{streak.longest}}</text>
+      <text class="streak-label">最长记录（天）</text>
+    </view>
+  </view>
+</view>

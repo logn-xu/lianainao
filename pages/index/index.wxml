@@ -1,0 +1,105 @@
+<view class="page">
+  <!-- 情侣信息 -->
+  <view class="hero">
+    <view class="hero-top">
+      <view class="couple">
+        <view class="avatar me">{{profile.me.emoji}}</view>
+        <view class="heart">♥</view>
+        <view class="avatar ta">{{profile.ta.emoji}}</view>
+      </view>
+      <view class="day-badge" wx:if="{{days}}">
+        <text class="day-num">{{days}}</text>
+        <text class="day-unit">天</text>
+      </view>
+    </view>
+    <view class="hero-names">{{profile.me.name}} & {{profile.ta.name}}</view>
+    <view class="hero-sub">{{heroSub}}</view>
+    <view class="hero-stats">
+      <view class="hero-stat">
+        <text class="hs-num">{{summary.milktea}}</text>
+        <text class="hs-label">本月奶茶</text>
+      </view>
+      <view class="hero-divider"></view>
+      <view class="hero-stat">
+        <text class="hs-num">{{summary.snack}}</text>
+        <text class="hs-label">本月放纵</text>
+      </view>
+      <view class="hero-divider"></view>
+      <view class="hero-stat">
+        <text class="hs-num">{{summary.total}}</text>
+        <text class="hs-label">本月记录</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 快速记录 -->
+  <view class="quick">
+    <view class="quick-head">
+      <text class="quick-title">快速记一笔</text>
+      <text class="quick-tip">长按记录可删除</text>
+    </view>
+    <view class="quick-row">
+      <view
+        class="quick-item"
+        wx:for="{{types}}"
+        wx:key="key"
+        data-key="{{item.key}}"
+        bindtap="onQuickAdd"
+        hover-class="quick-hover"
+      >
+        <view class="quick-icon" style="background:{{item.bg}}">{{item.emoji}}</view>
+        <text class="quick-name">{{item.name}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 时间线 -->
+  <block wx:if="{{!empty}}">
+    <view class="group" wx:for="{{groups}}" wx:key="date" wx:for-item="group">
+      <view class="group-head">
+        <text class="group-label">{{group.label}}</text>
+        <text class="group-week">{{group.weekday}}</text>
+        <view class="group-line"></view>
+        <text class="group-count">{{group.records.length}} 条</text>
+      </view>
+
+      <view class="group-card">
+        <view
+          class="rec"
+          wx:for="{{group.records}}"
+          wx:key="id"
+          wx:for-item="rec"
+          wx:for-index="ri"
+          data-id="{{rec.id}}"
+          bindlongpress="onRecordLongPress"
+          hover-class="rec-hover"
+        >
+          <view class="rec-icon" style="background:{{rec.meta.bg}}">{{rec.meta.emoji}}</view>
+          <view class="rec-body">
+            <view class="rec-line">
+              <text class="rec-name" style="color:{{rec.meta.color}}">{{rec.meta.fullName}}</text>
+              <text class="rec-amount" wx:if="{{rec.meta.count}}">× {{rec.amount}}</text>
+              <text class="rec-time">{{rec.authorEmoji}} {{rec.time}}</text>
+            </view>
+            <text class="rec-note" wx:if="{{rec.note}}">{{rec.note}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+  </block>
+
+  <view class="empty" wx:else>
+    <text class="empty-emoji">🧋</text>
+    <text class="empty-title">今天还没有记录</text>
+    <text class="empty-sub">点下面的按钮，记下第一杯奶茶</text>
+  </view>
+
+  <view class="fab" hover-class="fab-hover" bindtap="onFabTap">+</view>
+
+  <composer
+    show="{{composerShow}}"
+    default-type="{{composerType}}"
+    bind:submit="onComposerSubmit"
+    bind:close="onComposerClose"
+  />
+</view>

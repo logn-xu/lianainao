@@ -1,0 +1,275 @@
+.person {
+  display: flex;
+  align-items: center;
+  margin-top: 28rpx;
+}
+
+.p-avatar {
+  width: 92rpx;
+  height: 92rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 44rpx;
+}
+
+.p-avatar.me {
+  background: #FBF1E7;
+}
+
+.p-avatar.ta {
+  background: #FCEBF0;
+}
+
+.p-info {
+  flex: 1;
+  margin-left: 22rpx;
+}
+
+.p-name {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #3C332C;
+  height: 46rpx;
+  line-height: 46rpx;
+}
+
+.p-ph {
+  color: #C6B8AA;
+  font-weight: 400;
+}
+
+.p-tip {
+  font-size: 21rpx;
+  color: #BBAEA1;
+}
+
+.avatars {
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: 18rpx;
+}
+
+.av {
+  width: 70rpx;
+  height: 70rpx;
+  margin: 0 12rpx 12rpx 0;
+  border-radius: 22rpx;
+  background: #FBF6F0;
+  border: 2rpx solid transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 34rpx;
+}
+
+.av.on {
+  border-color: #F0B9BC;
+  background: #FDECEC;
+}
+
+.h-line {
+  height: 1rpx;
+  background: #F5EEE6;
+  margin: 22rpx 0 4rpx;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 96rpx;
+  border-bottom: 1rpx solid #F7F0E8;
+}
+
+.row:last-child {
+  border-bottom: none;
+}
+
+.row-hover {
+  background: #FCF8F3;
+}
+
+.row-label {
+  font-size: 27rpx;
+  color: #5B4C42;
+}
+
+.row-label.danger {
+  color: #D9535C;
+}
+
+.row-value {
+  display: flex;
+  align-items: center;
+  font-size: 26rpx;
+  color: #8B7F74;
+}
+
+.row-value.plain {
+  padding-right: 4rpx;
+}
+
+.chevron {
+  margin-left: 8rpx;
+  color: #C9BBAD;
+  font-size: 30rpx;
+}
+
+.row-note {
+  padding: 16rpx 0 4rpx;
+  font-size: 21rpx;
+  color: #BBAEA1;
+}
+
+.foot {
+  margin: 28rpx 8rpx 0;
+  font-size: 21rpx;
+  line-height: 1.7;
+  color: #BBAEA1;
+  text-align: center;
+}
+
+/* 双人同步 */
+.sync-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.sync-title-wrap {
+  flex: 1;
+  padding-right: 16rpx;
+}
+
+.sync-state {
+  display: flex;
+  align-items: center;
+  padding: 6rpx 16rpx;
+  border-radius: 999rpx;
+  background: #F6EFE7;
+  color: #A2937F;
+  font-size: 20rpx;
+}
+
+.sync-state .dot {
+  width: 10rpx;
+  height: 10rpx;
+  border-radius: 50%;
+  margin-right: 8rpx;
+  background: #C9BBAD;
+}
+
+.sync-state.on {
+  background: #E4F2EB;
+  color: #4E9D80;
+}
+
+.sync-state.on .dot {
+  background: #4E9D80;
+}
+
+.invite {
+  display: flex;
+  align-items: center;
+  margin-top: 24rpx;
+  padding: 20rpx 24rpx;
+  border-radius: 22rpx;
+  background: #FBF6F0;
+}
+
+.invite-label {
+  font-size: 23rpx;
+  color: #A2937F;
+}
+
+.invite-code {
+  flex: 1;
+  margin-left: 20rpx;
+  font-size: 36rpx;
+  font-weight: 700;
+  letter-spacing: 6rpx;
+  color: #B4666F;
+}
+
+.invite-copy {
+  padding: 8rpx 22rpx;
+  border-radius: 999rpx;
+  background: #FFFFFF;
+  color: #C4707F;
+  font-size: 22rpx;
+  box-shadow: 0 4rpx 12rpx rgba(150, 116, 96, 0.08);
+}
+
+.members {
+  display: flex;
+  align-items: center;
+  margin-top: 20rpx;
+}
+
+.member-chip {
+  display: flex;
+  align-items: center;
+  padding: 10rpx 20rpx;
+  border-radius: 999rpx;
+  background: #FBF6F0;
+}
+
+.member-chip.waiting {
+  background: #FBF6F0;
+  opacity: 0.7;
+}
+
+.member-emoji {
+  font-size: 26rpx;
+}
+
+.member-name {
+  margin-left: 8rpx;
+  font-size: 23rpx;
+  color: #6B5B4F;
+}
+
+.member-link {
+  margin: 0 16rpx;
+  font-size: 22rpx;
+  color: #D6C8BA;
+  letter-spacing: 2rpx;
+}
+
+.member-link.on {
+  color: #E0868F;
+}
+
+.sync-actions {
+  display: flex;
+  margin-top: 26rpx;
+}
+
+.btn {
+  flex: 1;
+  height: 84rpx;
+  border-radius: 999rpx;
+  font-size: 27rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn.primary {
+  background: linear-gradient(135deg, #F4AEAE 0%, #E0868F 100%);
+  color: #FFFFFF;
+  box-shadow: 0 10rpx 24rpx rgba(224, 134, 143, 0.28);
+}
+
+.btn.ghost {
+  margin-left: 18rpx;
+  background: #FBF6F0;
+  color: #8B7F74;
+  border: 2rpx solid #F0E5D9;
+}
+
+.btn-hover {
+  opacity: 0.88;
+}

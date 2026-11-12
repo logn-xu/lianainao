@@ -1,0 +1,89 @@
+<view class="composer {{show ? 'on' : ''}}">
+  <view class="mask" catchtap="onClose" catchtouchmove="noop"></view>
+
+  <view class="sheet">
+    <view class="grabber"></view>
+
+    <view class="sheet-head">
+      <text class="sheet-title">记一笔</text>
+      <view class="close" catchtap="onClose">✕</view>
+    </view>
+
+    <view class="type-row">
+      <view
+        wx:for="{{types}}"
+        wx:key="key"
+        class="type {{form.type === item.key ? 'active' : ''}}"
+        style="{{form.type === item.key ? 'background:' + item.bg + ';border-color:' + item.color + '33' : ''}}"
+        data-key="{{item.key}}"
+        bindtap="onPickType"
+      >
+        <text class="type-emoji">{{item.emoji}}</text>
+        <text class="type-name {{form.type === item.key ? 'active' : ''}}"
+          style="{{form.type === item.key ? 'color:' + item.color : ''}}">{{item.name}}</text>
+      </view>
+    </view>
+
+    <view class="hint">{{current.hint}}</view>
+
+    <view class="rows">
+      <view class="row">
+        <text class="row-label">日期</text>
+        <picker mode="date" value="{{form.date}}" end="{{maxDate}}" bindchange="onDateChange">
+          <view class="row-value">
+            <text>{{form.dateLabel}}</text>
+            <text class="chevron">›</text>
+          </view>
+        </picker>
+      </view>
+
+      <view class="row">
+        <text class="row-label">时间</text>
+        <picker mode="time" value="{{form.time}}" bindchange="onTimeChange">
+          <view class="row-value">
+            <text>{{form.time}}</text>
+            <text class="chevron">›</text>
+          </view>
+        </picker>
+      </view>
+
+      <view class="row" wx:if="{{current.count}}">
+        <text class="row-label">数量</text>
+        <view class="stepper">
+          <view class="step {{form.amount <= 1 ? 'disabled' : ''}}" catchtap="onMinus">−</view>
+          <text class="step-num">{{form.amount}} {{current.unit}}</text>
+          <view class="step" catchtap="onPlus">+</view>
+        </view>
+      </view>
+
+      <view class="row author-row">
+        <text class="row-label">谁记的</text>
+        <view class="authors">
+          <view class="author {{form.authorId === 'me' ? 'on' : ''}}" data-role="me" bindtap="onPickAuthor">
+            <text class="author-emoji">{{profile.me.emoji}}</text>
+            <text class="author-name">{{profile.me.name}}</text>
+          </view>
+          <view class="author {{form.authorId === 'ta' ? 'on' : ''}}" data-role="ta" bindtap="onPickAuthor">
+            <text class="author-emoji">{{profile.ta.emoji}}</text>
+            <text class="author-name">{{profile.ta.name}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="note-wrap">
+      <textarea
+        class="note"
+        value="{{form.note}}"
+        placeholder="{{current.placeholder}}"
+        placeholder-class="note-ph"
+        maxlength="60"
+        auto-height
+        bindinput="onNoteInput"
+      ></textarea>
+      <text class="counter">{{form.note.length}}/60</text>
+    </view>
+
+    <view class="submit" hover-class="submit-hover" bindtap="onSubmit">保存记录</view>
+  </view>
+</view>

@@ -1,0 +1,37 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/stats/stats",
+    "pages/mine/mine"
+  ],
+  "window": {
+    "backgroundTextStyle": "dark",
+    "backgroundColor": "#FBF5ED",
+    "navigationBarBackgroundColor": "#FBF5ED",
+    "navigationBarTitleText": "我们的日常",
+    "navigationBarTextStyle": "black"
+  },
+  "tabBar": {
+    "color": "#B9AC9F",
+    "selectedColor": "#E0868F",
+    "backgroundColor": "#FFFFFF",
+    "borderStyle": "white",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "日常"
+      },
+      {
+        "pagePath": "pages/stats/stats",
+        "text": "统计"
+      },
+      {
+        "pagePath": "pages/mine/mine",
+        "text": "我的"
+      }
+    ]
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json",
+  "lazyCodeLoading": "requiredComponents"
+}

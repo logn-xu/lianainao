@@ -1,0 +1,6 @@
+{
+  "navigationBarTitleText": "我们的日常",
+  "usingComponents": {
+    "composer": "/components/composer/composer"
+  }
+}

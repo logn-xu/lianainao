@@ -1,0 +1,261 @@
+.composer {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 900;
+  pointer-events: none;
+}
+
+.composer.on {
+  pointer-events: auto;
+}
+
+.mask {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  background: rgba(59, 50, 44, 0.36);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.composer.on .mask {
+  opacity: 1;
+}
+
+.sheet {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #FFFDFB;
+  border-radius: 36rpx 36rpx 0 0;
+  padding: 16rpx 32rpx calc(28rpx + env(safe-area-inset-bottom));
+  box-shadow: 0 -12rpx 40rpx rgba(120, 90, 72, 0.12);
+  transform: translateY(105%);
+  transition: transform 0.3s cubic-bezier(0.22, 0.8, 0.28, 1);
+}
+
+.composer.on .sheet {
+  transform: translateY(0);
+}
+
+.grabber {
+  width: 68rpx;
+  height: 8rpx;
+  border-radius: 8rpx;
+  background: #EADFD3;
+  margin: 0 auto 12rpx;
+}
+
+.sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8rpx 0 20rpx;
+}
+
+.sheet-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #3C332C;
+}
+
+.close {
+  width: 52rpx;
+  height: 52rpx;
+  border-radius: 50%;
+  background: #F5EEE6;
+  color: #A2937F;
+  font-size: 24rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.type-row {
+  display: flex;
+  justify-content: space-between;
+}
+
+.type {
+  width: 118rpx;
+  padding: 16rpx 0 14rpx;
+  border-radius: 22rpx;
+  border: 2rpx solid #F3EAE0;
+  background: #FBF6F0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: background 0.2s ease;
+}
+
+.type-emoji {
+  font-size: 36rpx;
+  line-height: 1.2;
+}
+
+.type-name {
+  margin-top: 6rpx;
+  font-size: 22rpx;
+  color: #A2937F;
+}
+
+.type-name.active {
+  font-weight: 600;
+}
+
+.hint {
+  margin: 16rpx 4rpx 0;
+  font-size: 22rpx;
+  color: #C0B2A4;
+}
+
+.rows {
+  margin-top: 20rpx;
+  background: #FBF6F0;
+  border-radius: 24rpx;
+  padding: 4rpx 24rpx;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 92rpx;
+  border-bottom: 1rpx solid #F1E7DB;
+}
+
+.row:last-child {
+  border-bottom: none;
+}
+
+.row-label {
+  font-size: 27rpx;
+  color: #8B7F74;
+}
+
+.row-value {
+  display: flex;
+  align-items: center;
+  font-size: 28rpx;
+  color: #3C332C;
+}
+
+.chevron {
+  margin-left: 8rpx;
+  color: #C9BBAD;
+  font-size: 30rpx;
+}
+
+.stepper {
+  display: flex;
+  align-items: center;
+}
+
+.step {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 50%;
+  background: #FFFFFF;
+  color: #E0868F;
+  font-size: 34rpx;
+  line-height: 52rpx;
+  text-align: center;
+  box-shadow: 0 2rpx 8rpx rgba(150, 116, 96, 0.1);
+}
+
+.step.disabled {
+  color: #DCCFC1;
+}
+
+.step-num {
+  min-width: 110rpx;
+  text-align: center;
+  font-size: 28rpx;
+  color: #3C332C;
+}
+
+.authors {
+  display: flex;
+}
+
+.author {
+  display: flex;
+  align-items: center;
+  padding: 8rpx 18rpx;
+  margin-left: 12rpx;
+  border-radius: 999rpx;
+  background: #FFFFFF;
+  border: 2rpx solid #F1E7DB;
+}
+
+.author.on {
+  border-color: #F0B9BC;
+  background: #FDECEC;
+}
+
+.author-emoji {
+  font-size: 26rpx;
+}
+
+.author-name {
+  margin-left: 6rpx;
+  font-size: 24rpx;
+  color: #8B7F74;
+}
+
+.author.on .author-name {
+  color: #C4646F;
+}
+
+.note-wrap {
+  position: relative;
+  margin-top: 20rpx;
+  background: #FBF6F0;
+  border-radius: 24rpx;
+  padding: 22rpx 24rpx 44rpx;
+}
+
+.note {
+  width: 100%;
+  min-height: 80rpx;
+  font-size: 27rpx;
+  line-height: 1.6;
+  color: #3C332C;
+}
+
+.note-ph {
+  color: #C6B8AA;
+}
+
+.counter {
+  position: absolute;
+  right: 24rpx;
+  bottom: 14rpx;
+  font-size: 20rpx;
+  color: #C6B8AA;
+}
+
+.submit {
+  margin-top: 26rpx;
+  height: 96rpx;
+  border-radius: 999rpx;
+  background: linear-gradient(135deg, #F2A6A6 0%, #E0868F 100%);
+  color: #FFFFFF;
+  font-size: 30rpx;
+  font-weight: 600;
+  letter-spacing: 2rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 12rpx 28rpx rgba(224, 134, 143, 0.32);
+}
+
+.submit-hover {
+  opacity: 0.9;
+}
