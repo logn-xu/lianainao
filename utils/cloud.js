@@ -87,6 +87,9 @@ module.exports = {
   deleteRecord: function (id) {
     return call('deleteRecord', { id: id })
   },
+  updateRecord: function (id, record) {
+    return call('updateRecord', { id: id, record: record })
+  },
   clearRecords: function () {
     return call('clearRecords')
   },

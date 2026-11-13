@@ -2,9 +2,6 @@
 const store = require('./store')
 const cloud = require('./cloud')
 
-const DEFAULT_ME_NAME = '我'
-const DEFAULT_ME_EMOJI = '🐻'
-
 let syncing = false
 let lastSyncAt = 0
 
@@ -42,13 +39,8 @@ function applyState(state) {
   ;(couple.members || []).forEach(function (member) {
     if (!member || !member.openid) return
     if (member.openid === state.openid) {
+      // 自己的昵称头像以本机为准，只补上 openid
       profile.me.openid = member.openid
-      if (!profile.me.name || profile.me.name === DEFAULT_ME_NAME) {
-        profile.me.name = member.name || profile.me.name
-      }
-      if (!profile.me.emoji || profile.me.emoji === DEFAULT_ME_EMOJI) {
-        profile.me.emoji = member.emoji || profile.me.emoji
-      }
     } else {
       profile.ta.openid = member.openid
       if (member.name) profile.ta.name = member.name
@@ -63,10 +55,11 @@ function applyState(state) {
 
 async function pushProfile(profile) {
   if (!profile.profileDirty || !profile.coupleId) return
+  // 只有本人改过的昵称/头像才同步，避免把「我 / 🐻」这种默认值推给对方
   await cloud.saveProfile({
     settings: { startDate: profile.startDate || '', cycle: profile.cycle || 28 },
-    name: profile.me.name,
-    emoji: profile.me.emoji
+    name: profile.me.nameSet ? profile.me.name : '',
+    emoji: profile.me.emojiSet ? profile.me.emoji : ''
   })
   const next = store.getProfile()
   next.profileDirty = false
@@ -88,12 +81,30 @@ async function pushPending(profile) {
     }
 
     const author = profile[item.authorId] || profile.me
+
+    // 已上传过的记录走更新，没上传过的走新增
+    if (item.serverId) {
+      await cloud.updateRecord(item.serverId, {
+        type: item.type,
+        date: item.date,
+        time: item.time,
+        amount: item.amount,
+        note: item.note,
+        images: item.images || [],
+        authorOpenid: author.openid || ''
+      })
+      store.markClean(item.id)
+      continue
+    }
+
     const res = await cloud.addRecord({
+      clientId: item.clientId || item.id,
       type: item.type,
       date: item.date,
       time: item.time,
       amount: item.amount,
       note: item.note,
+      images: item.images || [],
       authorOpenid: author.openid || '',
       createdAt: item.createdAt
     })
@@ -118,13 +129,14 @@ async function syncNow() {
     applyState(state)
 
     const res = await cloud.listRecords()
-    store.applyServerRecords(res.records || [], store.getProfile())
     lastSyncAt = Date.now()
+    syncing = false
+    // 最后一步会触发页面刷新，此时应已不在同步中
+    store.applyServerRecords(res.records || [], store.getProfile())
     return { ok: true, count: (res.records || []).length }
   } catch (err) {
-    return { ok: false, reason: (err && err.code) || 'FAILED', detail: err && err.detail }
-  } finally {
     syncing = false
+    return { ok: false, reason: (err && err.code) || 'FAILED', detail: err && err.detail }
   }
 }
 
@@ -134,9 +146,31 @@ function auto() {
   syncNow()
 }
 
+// 换手机 / 重装后：本地没记住情侣空间，但云端有，就自动恢复绑定
+function restore() {
+  if (!cloud.init()) return Promise.resolve()
+  return cloud
+    .state()
+    .then(function (state) {
+      if (state && state.bound) {
+        applyState(state)
+        return syncNow()
+      }
+      return null
+    })
+    .catch(function () {
+      return null
+    })
+}
+
 function bootstrap() {
-  cloud.init()
-  auto()
+  if (!cloud.init()) return
+  const profile = store.getProfile()
+  if (profile.coupleId) {
+    auto()
+    return
+  }
+  restore()
 }
 
 /* ---------- 绑定 ---------- */

@@ -54,6 +54,7 @@ Page({
   onShow: function () {
     this.load()
     this.refreshCloud()
+    sync.auto()
   },
 
   load: function () {
@@ -216,6 +217,7 @@ Page({
     const value = (e.detail.value || '').trim()
     const patch = {}
     patch['profile.' + role + '.name'] = value || (role === 'me' ? '我' : 'TA')
+    if (role === 'me' && value) patch['profile.me.nameSet'] = true
     this.setData(patch, this.persist)
   },
 
@@ -224,6 +226,7 @@ Page({
     const emoji = e.currentTarget.dataset.emoji
     const patch = {}
     patch['profile.' + role + '.emoji'] = emoji
+    if (role === 'me') patch['profile.me.emojiSet'] = true
     this.setData(patch, this.persist)
   },
 

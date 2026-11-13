@@ -36,7 +36,7 @@
   <view class="quick">
     <view class="quick-head">
       <text class="quick-title">快速记一笔</text>
-      <text class="quick-tip">长按记录可删除</text>
+      <text class="quick-tip">点击记录可编辑 · 长按删除</text>
     </view>
     <view class="quick-row">
       <view
@@ -71,6 +71,7 @@
           wx:for-item="rec"
           wx:for-index="ri"
           data-id="{{rec.id}}"
+          bindtap="onRecordTap"
           bindlongpress="onRecordLongPress"
           hover-class="rec-hover"
         >
@@ -82,6 +83,18 @@
               <text class="rec-time">{{rec.authorEmoji}} {{rec.time}}</text>
             </view>
             <text class="rec-note" wx:if="{{rec.note}}">{{rec.note}}</text>
+            <view class="rec-imgs" wx:if="{{rec.images.length}}">
+              <image
+                class="rec-img"
+                wx:for="{{rec.images}}"
+                wx:key="*this"
+                src="{{item}}"
+                mode="aspectFill"
+                data-images="{{rec.images}}"
+                data-current="{{item}}"
+                catchtap="onPreviewImage"
+              />
+            </view>
           </view>
         </view>
       </view>
@@ -99,7 +112,9 @@
   <composer
     show="{{composerShow}}"
     default-type="{{composerType}}"
+    edit-record="{{editingRecord}}"
     bind:submit="onComposerSubmit"
+    bind:edit="onComposerEdit"
     bind:close="onComposerClose"
   />
 </view>

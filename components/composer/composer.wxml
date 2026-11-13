@@ -5,7 +5,7 @@
     <view class="grabber"></view>
 
     <view class="sheet-head">
-      <text class="sheet-title">记一笔</text>
+      <text class="sheet-title">{{editing ? '编辑记录' : '记一笔'}}</text>
       <view class="close" catchtap="onClose">✕</view>
     </view>
 
@@ -84,6 +84,22 @@
       <text class="counter">{{form.note.length}}/60</text>
     </view>
 
-    <view class="submit" hover-class="submit-hover" bindtap="onSubmit">保存记录</view>
+    <view class="img-wrap">
+      <view class="img-head">
+        <text class="img-title">图片</text>
+        <text class="img-tip">可选 · 原图上传</text>
+      </view>
+      <view class="img-row">
+        <view class="img-item" wx:for="{{form.images}}" wx:key="*this">
+          <image class="img-thumb" src="{{item}}" mode="aspectFill" data-index="{{index}}" bindtap="onPreviewImage" />
+          <view class="img-del" data-index="{{index}}" catchtap="onRemoveImage">✕</view>
+        </view>
+        <view class="img-add" wx:if="{{form.images.length < 9 && !uploading}}" bindtap="onPickImage">+</view>
+        <view class="img-add loading" wx:if="{{uploading}}">…</view>
+      </view>
+      <text class="img-foot">最多 9 张 · 按记录日期归档到 daily/yyyymmdd</text>
+    </view>
+
+    <view class="submit" hover-class="submit-hover" bindtap="onSubmit">{{editing ? '保存修改' : '保存记录'}}</view>
   </view>
 </view>

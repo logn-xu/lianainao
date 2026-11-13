@@ -38,6 +38,8 @@
   box-shadow: 0 -12rpx 40rpx rgba(120, 90, 72, 0.12);
   transform: translateY(105%);
   transition: transform 0.3s cubic-bezier(0.22, 0.8, 0.28, 1);
+  max-height: 88vh;
+  overflow-y: auto;
 }
 
 .composer.on .sheet {
@@ -258,4 +260,86 @@
 
 .submit-hover {
   opacity: 0.9;
+}
+
+/* 图片 */
+.img-wrap {
+  margin-top: 20rpx;
+  background: #FBF6F0;
+  border-radius: 24rpx;
+  padding: 22rpx 24rpx 18rpx;
+}
+
+.img-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.img-title {
+  font-size: 27rpx;
+  color: #8B7F74;
+}
+
+.img-tip {
+  font-size: 21rpx;
+  color: #C2B4A6;
+}
+
+.img-row {
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: 18rpx;
+}
+
+.img-item {
+  position: relative;
+  width: 132rpx;
+  height: 132rpx;
+  margin: 0 14rpx 14rpx 0;
+}
+
+.img-thumb {
+  width: 100%;
+  height: 100%;
+  border-radius: 18rpx;
+  background: #F1E7DB;
+}
+
+.img-del {
+  position: absolute;
+  right: -8rpx;
+  top: -8rpx;
+  width: 36rpx;
+  height: 36rpx;
+  border-radius: 50%;
+  background: rgba(59, 50, 44, 0.78);
+  color: #FFFFFF;
+  font-size: 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.img-add {
+  width: 132rpx;
+  height: 132rpx;
+  margin-bottom: 14rpx;
+  border-radius: 18rpx;
+  border: 2rpx dashed #DCCFC1;
+  color: #BBAEA1;
+  font-size: 46rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.img-add.loading {
+  border-style: solid;
+  font-size: 30rpx;
+}
+
+.img-foot {
+  font-size: 20rpx;
+  color: #C6B8AA;
 }

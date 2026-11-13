@@ -9,17 +9,31 @@ const _ = db.command
 const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
 let collectionsEnsured = false
 
-// 首次调用时自动建集合，省去手动创建
+// 首次调用时自动建集合，省去手动创建；失败也不影响已有集合
 async function ensureCollections() {
   if (collectionsEnsured) return
   collectionsEnsured = true
+  if (typeof db.createCollection !== 'function') return
   await Promise.all(
     ['couples', 'records'].map(function (name) {
-      return db.createCollection(name).catch(function () {
-        return null
-      })
+      return Promise.resolve()
+        .then(function () {
+          return db.createCollection(name)
+        })
+        .catch(function () {
+          return null
+        })
     })
   )
+}
+
+function normalizeImages(images) {
+  if (!Array.isArray(images)) return []
+  return images
+    .filter(function (item) {
+      return typeof item === 'string' && item.indexOf('cloud://') === 0
+    })
+    .slice(0, 9)
 }
 
 function normalizeSettings(settings) {
@@ -75,7 +89,7 @@ async function createCouple(openid) {
   const doc = {
     inviteCode: await generateCode(),
     memberOpenids: [openid],
-    members: [{ openid: openid, name: '我', emoji: '🐻', joinedAt: now }],
+    members: [{ openid: openid, name: '', emoji: '', joinedAt: now }],
     settings: { startDate: '', cycle: 28 },
     createdAt: now,
     updatedAt: now
@@ -113,7 +127,7 @@ async function joinCouple(openid, code) {
       data: {
         memberOpenids: _.push([openid]),
         members: _.push([
-          { openid: openid, name: 'TA', emoji: '🐰', joinedAt: Date.now() }
+          { openid: openid, name: '', emoji: '', joinedAt: Date.now() }
         ]),
         updatedAt: Date.now()
       }
@@ -143,20 +157,64 @@ async function addRecord(openid, record) {
 
   const members = couple.memberOpenids || []
   const authorOpenid = members.indexOf(input.authorOpenid) >= 0 ? input.authorOpenid : openid
+  const clientId = input.clientId ? String(input.clientId) : ''
+
+  // 同一条本地记录重试时不会产生重复数据
+  if (clientId) {
+    const exists = await db
+      .collection('records')
+      .where({ coupleId: couple._id, clientId: clientId })
+      .limit(1)
+      .get()
+    if (exists.data && exists.data.length) return { ok: true, id: exists.data[0]._id }
+  }
 
   const doc = {
     coupleId: couple._id,
+    clientId: clientId,
     type: String(input.type),
     date: String(input.date),
     time: String(input.time || '12:00'),
     amount: Number(input.amount) || 1,
     note: String(input.note || '').slice(0, 100),
+    images: normalizeImages(input.images),
     authorOpenid: authorOpenid,
     createdAt: Number(input.createdAt) || Date.now(),
     updatedAt: Date.now()
   }
   const res = await db.collection('records').add({ data: doc })
   return { ok: true, id: res._id }
+}
+
+async function updateRecord(openid, id, record) {
+  const couple = await findCouple(openid)
+  if (!couple) return { error: 'NO_COUPLE' }
+  if (!id) return { error: 'BAD_RECORD' }
+
+  const res = await db.collection('records').doc(String(id)).get().catch(function () {
+    return null
+  })
+  const doc = res && res.data
+  if (!doc || doc.coupleId !== couple._id) return { error: 'NOT_FOUND' }
+
+  const input = record || {}
+  const members = couple.memberOpenids || []
+  const authorOpenid = members.indexOf(input.authorOpenid) >= 0 ? input.authorOpenid : doc.authorOpenid
+
+  const patch = {
+    type: String(input.type || doc.type),
+    date: String(input.date || doc.date),
+    time: String(input.time || doc.time),
+    amount: Number(input.amount) || doc.amount || 1,
+    note: input.note !== undefined ? String(input.note).slice(0, 100) : doc.note,
+    authorOpenid: authorOpenid,
+    updatedAt: Date.now()
+  }
+  if (Array.isArray(input.images)) patch.images = normalizeImages(input.images)
+
+  await db.collection('records').doc(String(id)).update({ data: patch })
+
+  return { ok: true }
 }
 
 async function deleteRecord(openid, id) {
@@ -240,6 +298,8 @@ exports.main = async function (event) {
         return await listRecords(openid)
       case 'addRecord':
         return await addRecord(openid, event.record)
+      case 'updateRecord':
+        return await updateRecord(openid, event.id, event.record)
       case 'deleteRecord':
         return await deleteRecord(openid, event.id)
       case 'clearRecords':

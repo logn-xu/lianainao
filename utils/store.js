@@ -4,7 +4,7 @@ const PROFILE_KEY = 'couple_profile_v1'
 
 const DEFAULT_PROFILE = {
   startDate: '',
-  me: { name: '我', emoji: '🐻', openid: '' },
+  me: { name: '我', emoji: '🐻', openid: '', nameSet: false, emojiSet: false },
   ta: { name: 'TA', emoji: '🐰', openid: '' },
   cycle: 28,
   coupleId: '',
@@ -89,11 +89,14 @@ function genId() {
 
 function addRecord(record) {
   const list = getRawRecords()
+  const clientId = record.clientId || record.id || genId()
   const item = Object.assign({}, record, {
-    id: record.id || genId(),
+    id: clientId,
+    clientId: clientId,
     serverId: '',
     pending: true,
-    deleted: false
+    deleted: false,
+    images: record.images || []
   })
   item.createdAt = record.createdAt || Date.now()
   list.push(item)
@@ -138,6 +141,33 @@ function markSynced(localId, serverId) {
   if (changed) saveRawRecords(list)
 }
 
+// 已上传的记录编辑后只清 pending，不动 id
+function markClean(id) {
+  const list = getRawRecords()
+  let changed = false
+  list.forEach(function (item) {
+    if (item.id === id && item.pending) {
+      item.pending = false
+      changed = true
+    }
+  })
+  if (changed) saveRawRecords(list)
+}
+
+function updateRecord(id, patch) {
+  const list = getRawRecords()
+  const target = list.filter(function (item) {
+    return item.id === id && !item.deleted
+  })[0]
+  if (!target) return null
+
+  // createdAt 保持不变，记录仍在原来的时间位置
+  Object.assign(target, patch, { pending: true })
+  saveRawRecords(list)
+  notify()
+  return target
+}
+
 function dropRecord(id) {
   saveRawRecords(
     getRawRecords().filter(function (item) {
@@ -168,12 +198,14 @@ function fromServer(doc, profile) {
   const isMe = !!doc.authorOpenid && doc.authorOpenid === profile.me.openid
   return {
     id: doc._id,
+    clientId: doc.clientId || doc._id,
     serverId: doc._id,
     type: doc.type,
     date: doc.date,
     time: doc.time || '12:00',
     amount: doc.amount || 1,
     note: doc.note || '',
+    images: doc.images || [],
     authorId: isMe ? 'me' : 'ta',
     authorOpenid: doc.authorOpenid || '',
     createdAt: doc.createdAt || Date.now(),
@@ -225,7 +257,9 @@ module.exports = {
   getRecords: getRecords,
   addRecord: addRecord,
   removeRecord: removeRecord,
+  updateRecord: updateRecord,
   markSynced: markSynced,
+  markClean: markClean,
   dropRecord: dropRecord,
   markAllPending: markAllPending,
   detachSyncIds: detachSyncIds,

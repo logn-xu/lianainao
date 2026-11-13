@@ -272,6 +272,20 @@
   word-break: break-all;
 }
 
+.rec-imgs {
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: 12rpx;
+}
+
+.rec-img {
+  width: 120rpx;
+  height: 120rpx;
+  margin: 0 12rpx 12rpx 0;
+  border-radius: 16rpx;
+  background: #F5EEE6;
+}
+
 /* 悬浮按钮 */
 .fab {
   position: fixed;

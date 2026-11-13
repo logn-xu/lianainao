@@ -1,5 +1,6 @@
 const store = require('../../utils/store')
 const sync = require('../../utils/sync')
+const images = require('../../utils/images')
 const stats = require('../../utils/stats')
 const { TYPES, TYPE_MAP } = require('../../utils/types')
 const { todayStr, dayDiff, relativeDayLabel, weekdayLabel } = require('../../utils/util')
@@ -14,7 +15,8 @@ Page({
     empty: true,
     summary: { milktea: 0, snack: 0, total: 0 },
     composerShow: false,
-    composerType: 'milktea'
+    composerType: 'milktea',
+    editingRecord: null
   },
 
   onLoad: function () {
@@ -84,7 +86,18 @@ Page({
   openComposer: function (type) {
     const that = this
     // 先同步类型，再弹出，避免组件 observer 读到旧类型
-    this.setData({ composerType: type }, function () {
+    this.setData({ composerType: type, editingRecord: null }, function () {
+      that.setData({ composerShow: true })
+    })
+  },
+
+  openEditor: function (id) {
+    const that = this
+    const target = store.getRecords().filter(function (item) {
+      return item.id === id
+    })[0]
+    if (!target) return
+    this.setData({ editingRecord: target }, function () {
       that.setData({ composerShow: true })
     })
   },
@@ -97,16 +110,35 @@ Page({
     this.openComposer('milktea')
   },
 
+  onRecordTap: function (e) {
+    this.openEditor(e.currentTarget.dataset.id)
+  },
+
   onComposerClose: function () {
     this.setData({ composerShow: false })
   },
 
   onComposerSubmit: function (e) {
     store.addRecord(e.detail.record)
+    images.removeFiles(e.detail.removedImages)
     this.setData({ composerShow: false })
     this.refresh()
     sync.auto()
     wx.showToast({ title: '记下来啦', icon: 'none' })
+  },
+
+  onComposerEdit: function (e) {
+    store.updateRecord(e.detail.id, e.detail.record)
+    images.removeFiles(e.detail.removedImages)
+    this.setData({ composerShow: false })
+    this.refresh()
+    sync.auto()
+    wx.showToast({ title: '改好啦', icon: 'none' })
+  },
+
+  onPreviewImage: function (e) {
+    const list = e.currentTarget.dataset.images || []
+    images.preview(list, e.currentTarget.dataset.current)
   },
 
   onRecordLongPress: function (e) {
