@@ -7,31 +7,93 @@ const db = cloud.database()
 const _ = db.command
 
 const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+const REQUIRED_COLLECTIONS = ['couples', 'records', 'kitchenDishes', 'kitchenOrders']
 let collectionsEnsured = false
+let ensuringCollections = null
 
-// 首次调用时自动建集合，省去手动创建；失败也不影响已有集合
+function isCollectionExists(err) {
+  const code = String((err && (err.errCode || err.code)) || '')
+  const message = String((err && (err.errMsg || err.message)) || err || '')
+  return code === 'ALREADY_EXISTS' || /already exist|ALREADY_EXISTS|已存在/i.test(message)
+}
+
+function errorMessage(err) {
+  return String((err && (err.errMsg || err.message || err.code)) || err || '')
+}
+
+// 建集合并保留结果，不再静默吞掉失败原因
+async function createCollectionWithResult(name) {
+  if (typeof db.createCollection !== 'function') {
+    return {
+      name: name,
+      status: 'failed',
+      message: 'wx-server-sdk 不支持 createCollection，请在云开发控制台手动新建集合'
+    }
+  }
+  try {
+    await db.createCollection(name)
+    return { name: name, status: 'created' }
+  } catch (err) {
+    if (isCollectionExists(err)) return { name: name, status: 'exists' }
+    return { name: name, status: 'failed', message: errorMessage(err) }
+  }
+}
+
+function failedCollections(results) {
+  return results.filter(function (item) {
+    return item.status === 'failed'
+  })
+}
+
+// 首次调用时自动建集合。并发请求必须共用同一次建集合任务，
+// 否则 getKitchen 会跳过创建、查到还不存在的集合而整体失败。
+// 只有全部创建完成才算就绪；真实失败允许下次请求重试，且不阻断业务。
 async function ensureCollections() {
   if (collectionsEnsured) return
-  collectionsEnsured = true
-  if (typeof db.createCollection !== 'function') return
-  await Promise.all(
-    ['couples', 'records'].map(function (name) {
-      return Promise.resolve()
-        .then(function () {
-          return db.createCollection(name)
-        })
-        .catch(function () {
-          return null
-        })
+  if (ensuringCollections) return ensuringCollections
+
+  ensuringCollections = Promise.all(
+    REQUIRED_COLLECTIONS.map(function (name) {
+      return createCollectionWithResult(name)
     })
-  )
+  ).then(function (results) {
+    const failed = failedCollections(results)
+    if (failed.length) console.warn('[api] createCollection failed:', JSON.stringify(failed))
+    collectionsEnsured = failed.length === 0
+    ensuringCollections = null
+  })
+
+  return ensuringCollections
+}
+
+// 页面「初始化」入口：强制重新检查，逐项返回创建结果与失败原因
+async function initDb(env) {
+  const results = []
+  for (let i = 0; i < REQUIRED_COLLECTIONS.length; i++) {
+    results.push(await createCollectionWithResult(REQUIRED_COLLECTIONS[i]))
+  }
+  const failed = failedCollections(results)
+  collectionsEnsured = failed.length === 0
+  ensuringCollections = null
+  return {
+    ok: failed.length === 0,
+    env: env || '',
+    collections: results,
+    message: failed.length
+      ? failed.map(function (item) {
+          return item.name + ': ' + item.message
+        }).join('; ')
+      : ''
+  }
 }
 
 function normalizeImages(images) {
   if (!Array.isArray(images)) return []
   return images
     .filter(function (item) {
-      return typeof item === 'string' && item.indexOf('cloud://') === 0
+      if (typeof item !== 'string') return false
+      // 云文件 ID，或小程序内置的预置菜单配图
+      return item.indexOf('cloud://') === 0 || item.indexOf('/images/dishes/') === 0
     })
     .slice(0, 9)
 }
@@ -52,6 +114,12 @@ async function findCouple(openid) {
     .get()
   return res.data && res.data.length ? res.data[0] : null
 }
+
+const kitchenApi = require('./kitchen')({
+  db: db,
+  findCouple: findCouple,
+  normalizeImages: normalizeImages
+})
 
 async function stateOf(openid) {
   const couple = await findCouple(openid)
@@ -282,12 +350,25 @@ async function unbind(openid) {
 exports.main = async function (event) {
   const wxContext = cloud.getWXContext()
   const openid = wxContext.OPENID
+  const env = wxContext.ENV || wxContext.env || ''
   const action = event && event.action
 
   try {
-    await ensureCollections()
+    if (action !== 'initDb') await ensureCollections()
 
     switch (action) {
+      case 'initDb': {
+        const result = await initDb(env)
+        const couple = await findCouple(openid)
+        if (couple) {
+          try {
+            result.seeded = await kitchenApi.seedPresets(openid, couple)
+          } catch (err) {
+            result.seedError = errorMessage(err)
+          }
+        }
+        return result
+      }
       case 'state':
         return await stateOf(openid)
       case 'createCouple':
@@ -308,6 +389,22 @@ exports.main = async function (event) {
         return await saveProfile(openid, event)
       case 'unbind':
         return await unbind(openid)
+      case 'getKitchen':
+        return await kitchenApi.getKitchen(openid)
+      case 'saveDish':
+        return await kitchenApi.saveDish(openid, event.dish)
+      case 'deleteDish':
+        return await kitchenApi.deleteDish(openid, event.id)
+      case 'createOrder':
+        return await kitchenApi.createOrder(openid, event.order)
+      case 'startCooking':
+        return await kitchenApi.startCooking(openid, event.id)
+      case 'saveCooking':
+        return await kitchenApi.saveCooking(openid, event.id, event.cooking)
+      case 'cancelOrder':
+        return await kitchenApi.cancelOrder(openid, event.id)
+      case 'reviewOrder':
+        return await kitchenApi.reviewOrder(openid, event.id, event.review)
       default:
         return { error: 'UNKNOWN_ACTION' }
     }

@@ -1,6 +1,8 @@
 {
   "navigationBarTitleText": "我们的日常",
   "usingComponents": {
-    "composer": "/components/composer/composer"
+    "composer": "/components/composer/composer",
+    "record-feed": "/components/record-feed/record-feed",
+    "stats-panel": "/components/stats-panel/stats-panel"
   }
 }

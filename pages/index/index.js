@@ -1,19 +1,19 @@
 const store = require('../../utils/store')
 const sync = require('../../utils/sync')
 const images = require('../../utils/images')
-const stats = require('../../utils/stats')
-const { TYPES, TYPE_MAP } = require('../../utils/types')
-const { todayStr, dayDiff, relativeDayLabel, weekdayLabel } = require('../../utils/util')
+const { todayStr, dayDiff, shortDate, weekdayLabel } = require('../../utils/util')
 
 Page({
   data: {
-    types: TYPES,
+    tabs: [
+      { key: 'feed', label: '时光记录' },
+      { key: 'stats', label: '小统计' }
+    ],
+    tab: 'feed',
     profile: store.DEFAULT_PROFILE,
+    records: [],
     days: 0,
     heroSub: '',
-    groups: [],
-    empty: true,
-    summary: { milktea: 0, snack: 0, total: 0 },
     composerShow: false,
     composerType: 'milktea',
     editingRecord: null
@@ -21,7 +21,7 @@ Page({
 
   onLoad: function () {
     const that = this
-    // 云端数据变更后自动刷新页面
+    // 云端数据变更后自动刷新，子组件共用这一份数据
     this.unsubscribe = store.subscribe(function () {
       that.refresh()
     })
@@ -38,49 +38,20 @@ Page({
 
   refresh: function () {
     const profile = store.getProfile()
-    const records = store.getRecords()
-    const now = new Date()
-    const monthList = stats.monthRecords(records, now.getFullYear(), now.getMonth() + 1)
-    const monthSummary = stats.summarize(monthList)
-
-    const groups = []
-    const groupMap = {}
-
-    records.forEach(function (record) {
-      if (!groupMap[record.date]) {
-        groupMap[record.date] = {
-          date: record.date,
-          label: relativeDayLabel(record.date),
-          weekday: weekdayLabel(record.date),
-          records: []
-        }
-        groups.push(groupMap[record.date])
-      }
-      const meta = TYPE_MAP[record.type] || TYPE_MAP.note
-      groupMap[record.date].records.push(
-        Object.assign({}, record, {
-          meta: meta,
-          authorEmoji: record.authorId === 'ta' ? profile.ta.emoji : profile.me.emoji
-        })
-      )
-    })
-
     const days = profile.startDate ? dayDiff(profile.startDate, todayStr()) + 1 : 0
 
     this.setData({
       profile: profile,
+      records: store.getRecords(),
       days: days,
       heroSub: days
-        ? '在一起的第 ' + days + ' 天 · ' + relativeDayLabel(todayStr())
-        : '去「我的」填上在一起的日子',
-      groups: groups,
-      empty: groups.length === 0,
-      summary: {
-        milktea: monthSummary.milktea,
-        snack: monthSummary.snack,
-        total: monthSummary.total
-      }
+        ? shortDate(todayStr()) + ' · ' + weekdayLabel(todayStr())
+        : '去「我的」填上在一起的日子'
     })
+  },
+
+  onSwitchTab: function (e) {
+    this.setData({ tab: e.currentTarget.dataset.key })
   },
 
   openComposer: function (type) {
@@ -102,16 +73,36 @@ Page({
     })
   },
 
-  onQuickAdd: function (e) {
-    this.openComposer(e.currentTarget.dataset.key)
+  onFeedAdd: function (e) {
+    this.openComposer(e.detail.key)
+  },
+
+  onFeedEdit: function (e) {
+    this.openEditor(e.detail.id)
+  },
+
+  onFeedPreview: function (e) {
+    const detail = e.detail || {}
+    images.preview(detail.images || [], detail.current)
+  },
+
+  onFeedRemove: function (e) {
+    const id = e.detail.id
+    const that = this
+    wx.showActionSheet({
+      itemList: ['删除这条记录'],
+      itemColor: '#D9535C',
+      success: function (res) {
+        if (res.tapIndex !== 0) return
+        store.removeRecord(id)
+        that.refresh()
+        sync.auto()
+      }
+    })
   },
 
   onFabTap: function () {
     this.openComposer('milktea')
-  },
-
-  onRecordTap: function (e) {
-    this.openEditor(e.currentTarget.dataset.id)
   },
 
   onComposerClose: function () {
@@ -134,25 +125,5 @@ Page({
     this.refresh()
     sync.auto()
     wx.showToast({ title: '改好啦', icon: 'none' })
-  },
-
-  onPreviewImage: function (e) {
-    const list = e.currentTarget.dataset.images || []
-    images.preview(list, e.currentTarget.dataset.current)
-  },
-
-  onRecordLongPress: function (e) {
-    const id = e.currentTarget.dataset.id
-    const that = this
-    wx.showActionSheet({
-      itemList: ['删除这条记录'],
-      itemColor: '#D9535C',
-      success: function (res) {
-        if (res.tapIndex !== 0) return
-        store.removeRecord(id)
-        that.refresh()
-        sync.auto()
-      }
-    })
   }
 })

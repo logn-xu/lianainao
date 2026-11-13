@@ -1,5 +1,4 @@
 // 云开发调用封装：未开通云环境时不会抛错，由上层回退到本地存储
-let tried = false
 let ready = false
 
 function available() {
@@ -7,12 +6,9 @@ function available() {
 }
 
 function init() {
-  if (tried) return ready
-  tried = true
-  if (!available()) {
-    ready = false
-    return false
-  }
+  if (ready) return true
+  // wx.cloud 在启动初期可能尚未注入，失败不缓存，下次调用（含重试）还能再试
+  if (!available()) return false
   let env = ''
   try {
     const app = getApp()
@@ -24,6 +20,7 @@ function init() {
     wx.cloud.init(env ? { env: env, traceUser: true } : { traceUser: true })
     ready = true
   } catch (e) {
+    console.warn('[cloud] init failed', e)
     ready = false
   }
   return ready
@@ -57,9 +54,10 @@ function call(action, data) {
         }
         return result
       },
-      function () {
+      function (reason) {
         const err = new Error('call_failed')
         err.code = 'CALL_FAILED'
+        err.detail = String((reason && (reason.errMsg || reason.message)) || '')
         throw err
       }
     )

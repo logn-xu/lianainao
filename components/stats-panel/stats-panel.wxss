@@ -1,20 +1,49 @@
+.panel {
+  background: #FFFFFF;
+  border-radius: 28rpx;
+  padding: 28rpx;
+  box-shadow: 0 10rpx 34rpx rgba(150, 116, 96, 0.07);
+}
+
+.panel + .panel {
+  margin-top: 24rpx;
+}
+
+.panel-title {
+  display: block;
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #3C332C;
+}
+
+.panel-sub {
+  display: block;
+  margin-top: 6rpx;
+  font-size: 23rpx;
+  color: #BBAEA1;
+}
+
+/* 月度概览：月份切换、汇总、连续记录共用一张卡 */
+.overview-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
 .month-bar {
   display: flex;
   align-items: center;
-  justify-content: center;
-  padding: 8rpx 0 24rpx;
 }
 
 .nav-btn {
-  width: 64rpx;
-  height: 64rpx;
+  width: 52rpx;
+  height: 52rpx;
   border-radius: 50%;
-  background: #FFFFFF;
+  background: #FBF6F0;
   color: #A2937F;
-  font-size: 36rpx;
-  line-height: 58rpx;
+  font-size: 32rpx;
+  line-height: 48rpx;
   text-align: center;
-  box-shadow: 0 6rpx 18rpx rgba(150, 116, 96, 0.08);
 }
 
 .nav-btn.disabled {
@@ -22,73 +51,100 @@
 }
 
 .nav-hover {
-  background: #FBF1E7;
+  background: #FBE8DE;
 }
 
 .month-title {
-  min-width: 240rpx;
+  min-width: 190rpx;
   text-align: center;
-  font-size: 30rpx;
+  font-size: 25rpx;
   font-weight: 600;
   color: #4A3E35;
 }
 
-.summary {
+.metrics {
   display: flex;
+  margin-top: 26rpx;
 }
 
-.sum-card {
+.metric {
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 28rpx 0 24rpx;
-  border-radius: 26rpx;
-  margin-right: 18rpx;
+  padding: 24rpx 0 20rpx;
+  margin-right: 12rpx;
+  border-radius: 24rpx;
 }
 
-.sum-card:last-child {
+.metric:last-child {
   margin-right: 0;
 }
 
-.sum-card.milk {
+.metric.milk {
   background: #F8EBDC;
 }
 
-.sum-card.snack {
+.metric.snack {
   background: #FBE8DE;
 }
 
-.sum-card.sport {
+.metric.sport {
   background: #E3F1EA;
 }
 
-.sum-num {
-  font-size: 44rpx;
+.metric.total {
+  background: #EDEBFA;
+}
+
+.metric-num {
+  font-size: 40rpx;
   font-weight: 700;
   line-height: 1.1;
 }
 
-.sum-card.milk .sum-num {
+.metric.milk .metric-num {
   color: #B98253;
 }
 
-.sum-card.snack .sum-num {
+.metric.snack .metric-num {
   color: #D2794E;
 }
 
-.sum-card.sport .sum-num {
+.metric.sport .metric-num {
   color: #4E9D80;
 }
 
-.sum-label {
+.metric.total .metric-num {
+  color: #8B84D7;
+}
+
+.metric-label {
   margin-top: 8rpx;
-  font-size: 21rpx;
+  font-size: 20rpx;
   color: #8B7F74;
 }
 
-.card {
+.streak-line {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   margin-top: 24rpx;
+  padding-top: 20rpx;
+  border-top: 1rpx solid #F5EEE6;
+  font-size: 23rpx;
+  color: #8B7F74;
+}
+
+.streak-num {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: #B98253;
+}
+
+.streak-dot {
+  margin: 0 14rpx;
+  color: #D9CDC0;
 }
 
 /* 日历 */
@@ -271,37 +327,4 @@
   font-size: 21rpx;
   line-height: 1.6;
   color: #BBAEA1;
-}
-
-/* 连续记录 */
-.streak-card {
-  display: flex;
-  align-items: center;
-  padding: 34rpx 0;
-}
-
-.streak-item {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.streak-num {
-  font-size: 46rpx;
-  font-weight: 700;
-  color: #B98253;
-  line-height: 1.1;
-}
-
-.streak-label {
-  margin-top: 8rpx;
-  font-size: 21rpx;
-  color: #8B7F74;
-}
-
-.streak-div {
-  width: 1rpx;
-  height: 56rpx;
-  background: #F1E7DB;
 }

@@ -37,7 +37,8 @@ Page({
     inviteCode: '',
     memberCount: 0,
     syncedText: '尚未同步',
-    working: false
+    working: false,
+    showClearRecords: false
   },
 
   onLoad: function () {

@@ -174,7 +174,10 @@ function preview(fileIDs, current) {
 
 // 移除图片时清理云端文件（尽力而为，失败不影响记录）
 function removeFiles(fileIDs) {
-  const ids = (fileIDs || []).filter(Boolean)
+  // 只清理云端文件，内置预置配图是小程序包内资源，不能删
+  const ids = (fileIDs || []).filter(function (id) {
+    return typeof id === 'string' && id.indexOf('cloud://') === 0
+  })
   if (!ids.length || !cloud.init()) return Promise.resolve()
   ids.forEach(function (id) {
     delete urlCache[id]

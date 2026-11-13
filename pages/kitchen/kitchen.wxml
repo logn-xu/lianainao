@@ -1,0 +1,370 @@
+<template name="orderCard">
+  <view class="order-card">
+    <view class="order-head">
+      <view class="order-dish-icon {{order.dishImage ? 'has-image' : ''}}">
+        <image
+          wx:if="{{order.dishImage}}"
+          src="{{order.dishImage}}"
+          mode="aspectFill"
+          data-current="{{order.dishImage}}"
+          bindtap="onPreviewImage"
+        />
+        <text wx:else>{{order.dishKind === 'favor' ? '💌' : '🍲'}}</text>
+      </view>
+      <view class="order-main">
+        <view class="order-name">{{order.dishName}} <text class="order-qty">× {{order.quantity}}</text></view>
+        <view class="order-time">{{order.createdText}} 下单</view>
+      </view>
+      <text class="status-chip {{order.statusTone}}">{{order.statusLabel}}</text>
+    </view>
+
+    <view class="order-note" wx:if="{{order.orderNote}}">点单备注：{{order.orderNote}}</view>
+
+    <view class="cook-result" wx:if="{{order.cookNote || order.cookImages.length}}">
+      <view class="result-label">TA 的制作记录</view>
+      <view class="cook-note" wx:if="{{order.cookNote}}">{{order.cookNote}}</view>
+      <view class="cook-images" wx:if="{{order.cookImages.length}}">
+        <image
+          wx:for="{{order.cookImages}}"
+          wx:key="*this"
+          src="{{item}}"
+          mode="aspectFill"
+          data-images="{{order.cookImages}}"
+          data-current="{{item}}"
+          bindtap="onPreviewImage"
+        />
+      </view>
+    </view>
+
+    <view class="review-result" wx:if="{{order.status === 'completed'}}">
+      <text class="review-stars">{{order.ratingText}}</text>
+      <text class="review-text" wx:if="{{order.review}}">{{order.review}}</text>
+      <text class="review-text muted" wx:else>这次用餐没有留下文字评价</text>
+    </view>
+
+    <view class="order-actions" wx:if="{{order.canStart || order.canCook || order.canReview || order.canCancel}}">
+      <view class="small-btn ghost" wx:if="{{order.canCancel}}" data-id="{{order._id}}" bindtap="onCancelOrder">取消订单</view>
+      <view class="small-btn primary" wx:if="{{order.canStart}}" data-id="{{order._id}}" bindtap="onStartCooking">开始制作</view>
+      <view class="small-btn primary" wx:if="{{order.canCook}}" data-id="{{order._id}}" bindtap="onOpenCook">制作 / 出餐</view>
+      <view class="small-btn primary" wx:if="{{order.canReview}}" data-id="{{order._id}}" bindtap="onOpenReview">用餐并评价</view>
+    </view>
+  </view>
+</template>
+
+<view class="page kitchen-page">
+  <view class="kitchen-hero">
+    <view class="kitchen-title">御膳房</view>
+    <view class="kitchen-sub">你负责点菜，TA 负责宠爱；角色随时互换</view>
+    <view class="hero-tags">
+      <text>定制菜单</text>
+      <text>爱心下厨</text>
+      <text>用餐评价</text>
+    </view>
+  </view>
+
+  <view class="state-card" wx:if="{{viewState === 'loading'}}">
+    <text class="state-emoji">🍳</text>
+    <text class="state-title">正在准备小厨房…</text>
+  </view>
+
+  <view class="state-card" wx:elif="{{viewState === 'unbound'}}">
+    <text class="state-emoji">💞</text>
+    <text class="state-title">先和 TA 连上情侣空间</text>
+    <text class="state-sub">绑定后才能互相定制菜单、点菜和下单</text>
+    <view class="primary-btn compact" bindtap="onGoMine">去绑定</view>
+  </view>
+
+  <view class="state-card" wx:elif="{{viewState === 'error'}}">
+    <text class="state-emoji">🥣</text>
+    <text class="state-title">厨房暂时没连上</text>
+    <text class="state-sub">{{errorText}}</text>
+    <view class="primary-btn compact" bindtap="onRetry">重新加载</view>
+    <view class="text-btn" bindtap="onInitDb">初始化数据库 / 查看原因</view>
+  </view>
+
+  <block wx:else>
+    <view class="state-card" wx:if="{{!collectionsReady}}">
+      <text class="state-emoji">🗄️</text>
+      <text class="state-title">数据库集合还没建好</text>
+      <text class="state-sub">点下面按钮创建 kitchenDishes、kitchenOrders，并查看失败原因</text>
+      <view class="primary-btn compact" bindtap="onInitDb">初始化数据库</view>
+    </view>
+
+    <view class="state-card" wx:elif="{{!hasPartner}}">
+      <text class="state-emoji">🪑</text>
+      <text class="state-title">还缺一位食客</text>
+      <text class="state-sub">把邀请码发给 TA，等 TA 加入后就能开伙啦</text>
+      <view class="primary-btn compact" bindtap="onGoMine">查看邀请码</view>
+    </view>
+
+    <block wx:else>
+      <view class="kitchen-tabs">
+        <view
+          wx:for="{{tabs}}"
+          wx:key="key"
+          class="kitchen-tab {{tab === item.key ? 'on' : ''}}"
+          data-key="{{item.key}}"
+          bindtap="onSwitchTab"
+        >{{item.label}}</view>
+      </view>
+
+      <!-- TA 为我定制的菜单 -->
+      <block wx:if="{{tab === 'menu'}}">
+        <view class="section-head">
+          <view>
+            <view class="section-title">TA 为你定制的菜单</view>
+            <view class="section-sub">选中喜欢的，告诉 TA 你的口味</view>
+          </view>
+          <text class="section-count">{{menuDishes.length}} 道</text>
+        </view>
+
+        <view class="dish-grid" wx:if="{{menuDishes.length}}">
+          <view class="dish-card" wx:for="{{menuDishes}}" wx:key="_id">
+            <image
+              class="dish-cover"
+              wx:if="{{item.image}}"
+              src="{{item.image}}"
+              mode="aspectFill"
+              data-current="{{item.image}}"
+              bindtap="onPreviewImage"
+            />
+            <view class="dish-cover placeholder" wx:else>{{item.kind === 'favor' ? '💌' : '🍲'}}</view>
+            <view class="dish-body">
+              <text class="dish-kind">{{item.kind === 'favor' ? '一件小事' : '一道菜'}}</text>
+              <view class="dish-name">{{item.name}}</view>
+              <view class="dish-desc">{{item.description || 'TA 没写介绍，留一点惊喜'}}</view>
+              <view class="order-btn" data-id="{{item._id}}" bindtap="onOpenOrder">点这个</view>
+            </view>
+          </view>
+        </view>
+
+        <view class="empty-panel" wx:else>
+          <text class="empty-emoji">📜</text>
+          <text class="empty-title">TA 还没给你写菜单</text>
+          <text class="empty-sub">你也可以先去「菜单管理」为 TA 定制一道</text>
+          <view class="text-btn" data-key="manage" bindtap="onSwitchTab">去为 TA 定制</view>
+        </view>
+      </block>
+
+      <!-- 订单 -->
+
+      <block wx:if="{{tab === 'orders'}}">
+        <view class="role-tabs">
+          <view
+            wx:for="{{orderRoles}}"
+            wx:key="key"
+            class="role-tab {{orderRole === item.key ? 'on' : ''}}"
+            data-key="{{item.key}}"
+            bindtap="onSwitchOrderRole"
+          >{{item.label}}</view>
+        </view>
+
+        <block wx:if="{{activeOrders.length}}">
+          <view class="order-section-title">进行中的订单</view>
+          <block wx:for="{{activeOrders}}" wx:key="_id">
+            <template is="orderCard" data="{{order: item}}" />
+          </block>
+        </block>
+
+        <block wx:if="{{historyOrders.length}}">
+          <view class="order-section-title">历史订单</view>
+          <block wx:for="{{historyOrders}}" wx:key="_id">
+            <template is="orderCard" data="{{order: item}}" />
+          </block>
+        </block>
+
+        <view class="empty-panel" wx:if="{{!activeOrders.length && !historyOrders.length}}">
+          <text class="empty-emoji">🧾</text>
+          <text class="empty-title">还没有订单</text>
+          <text class="empty-sub">{{orderRole === 'mine' ? '去菜单里点一道想吃的吧' : '等 TA 点单后，就轮到你掌勺啦'}}</text>
+        </view>
+      </block>
+
+      <!-- 我为 TA 管理菜单 -->
+      <block wx:if="{{tab === 'manage'}}">
+        <view class="section-head">
+          <view>
+            <view class="section-title">我为 TA 定制的菜单</view>
+            <view class="section-sub">可以是具体的菜，也可以是为 TA 做的一件小事</view>
+          </view>
+          <view class="add-btn" bindtap="onOpenDishEditor">＋ 新增</view>
+        </view>
+
+        <view class="manage-list" wx:if="{{managedDishes.length}}">
+          <view class="manage-card" wx:for="{{managedDishes}}" wx:key="_id">
+            <image
+              class="manage-thumb"
+              wx:if="{{item.image}}"
+              src="{{item.image}}"
+              mode="aspectFill"
+              data-current="{{item.image}}"
+              bindtap="onPreviewImage"
+            />
+            <view class="manage-thumb placeholder" wx:else>{{item.kind === 'favor' ? '💌' : '🍲'}}</view>
+            <view class="manage-main">
+              <view class="manage-name">{{item.name}}</view>
+              <view class="manage-meta">{{item.kind === 'favor' ? '一件小事' : '一道菜'}} · {{item.available ? '供应中' : '已下架'}}</view>
+              <view class="manage-desc" wx:if="{{item.description}}">{{item.description}}</view>
+            </view>
+            <view class="manage-actions">
+              <text class="edit-link" data-id="{{item._id}}" bindtap="onOpenDishEditor">编辑</text>
+              <text class="delete-link" data-id="{{item._id}}" bindtap="onDeleteDish">删除</text>
+            </view>
+          </view>
+        </view>
+
+        <view class="empty-panel" wx:else>
+          <text class="empty-emoji">✍️</text>
+          <text class="empty-title">给 TA 写第一道菜</text>
+          <text class="empty-sub">番茄炒蛋、周末按摩、陪看一场电影，都能写进菜单</text>
+          <view class="primary-btn compact" bindtap="onOpenDishEditor">定制菜单</view>
+        </view>
+      </block>
+    </block>
+  </block>
+
+  <!-- 下单 -->
+  <view class="sheet-overlay" wx:if="{{sheet}}" catchtap="closeSheet" catchtouchmove="noop">
+    <view class="sheet-panel" catchtap="noop">
+      <view class="sheet-head">
+        <text class="sheet-title">{{sheet === 'order' ? '确认点菜' : sheet === 'template' ? '选个模板，或自己写' : sheet === 'dish' ? (dishForm.id ? '编辑菜单' : '为 TA 定制菜单') : sheet === 'cook' ? '制作与出餐' : '用餐评价'}}</text>
+        <view class="sheet-close" bindtap="closeSheet">✕</view>
+      </view>
+
+      <block wx:if="{{sheet === 'template'}}">
+        <view class="template-hint">挑一个现成的填进表单，内容和图片之后都能改；也可以从空白开始自己写。</view>
+        <view class="template-filters">
+          <view class="template-filter {{templateFilter === 'all' ? 'on' : ''}}" data-key="all" bindtap="onSwitchTemplateFilter">全部 {{templateTotal}}</view>
+          <view class="template-filter {{templateFilter === 'dish' ? 'on' : ''}}" data-key="dish" bindtap="onSwitchTemplateFilter">具体菜</view>
+          <view class="template-filter {{templateFilter === 'favor' ? 'on' : ''}}" data-key="favor" bindtap="onSwitchTemplateFilter">一件小事</view>
+        </view>
+        <view class="template-grid">
+          <view class="template-card" wx:for="{{visibleTemplates}}" wx:key="name" data-index="{{index}}" bindtap="onPickTemplate">
+            <image class="template-thumb" src="{{item.image}}" mode="aspectFill" />
+            <view class="template-name">{{item.name}}</view>
+            <view class="template-kind">{{item.kind === 'favor' ? '一件小事' : '一道菜'}}</view>
+          </view>
+        </view>
+        <view class="primary-btn" bindtap="onCustomDish">自己写一个</view>
+      </block>
+
+      <block wx:if="{{sheet === 'order'}}">
+        <view class="selected-dish">
+          <text class="selected-emoji">{{selectedDish.kind === 'favor' ? '💌' : '🍲'}}</text>
+          <view>
+            <view class="selected-name">{{selectedDish.name}}</view>
+            <view class="selected-desc">{{selectedDish.description}}</view>
+          </view>
+        </view>
+        <view class="form-row">
+          <text class="form-label">数量</text>
+          <view class="stepper">
+            <view class="step {{orderForm.quantity <= 1 ? 'disabled' : ''}}" bindtap="onOrderMinus">−</view>
+            <text class="step-num">{{orderForm.quantity}}</text>
+            <view class="step" bindtap="onOrderPlus">＋</view>
+          </view>
+        </view>
+        <textarea
+          class="form-textarea"
+          value="{{orderForm.note}}"
+          maxlength="100"
+          placeholder="口味、忌口或想对 TA 说的话（选填）"
+          placeholder-class="form-placeholder"
+          bindinput="onOrderNote"
+        ></textarea>
+        <view class="primary-btn {{working ? 'disabled' : ''}}" bindtap="onSubmitOrder">确认下单</view>
+        <view class="sheet-footnote">目前不涉及支付，只负责把心意送到 TA 手上。</view>
+      </block>
+
+      <block wx:if="{{sheet === 'dish'}}">
+        <view class="kind-picker">
+          <view
+            wx:for="{{kindOptions}}"
+            wx:key="key"
+            class="kind-option {{dishForm.kind === item.key ? 'on' : ''}}"
+            data-key="{{item.key}}"
+            bindtap="onDishKind"
+          >{{item.label}}</view>
+        </view>
+        <input
+          class="form-input"
+          value="{{dishForm.name}}"
+          maxlength="24"
+          placeholder="名字，例如：番茄牛腩 / 周末按摩"
+          placeholder-class="form-placeholder"
+          bindinput="onDishName"
+        />
+        <textarea
+          class="form-textarea"
+          value="{{dishForm.description}}"
+          maxlength="200"
+          placeholder="介绍一下做法、口味，或者这件小事的内容（选填）"
+          placeholder-class="form-placeholder"
+          bindinput="onDishDescription"
+        ></textarea>
+        <view class="image-editor">
+          <view class="image-preview" wx:if="{{dishForm.image}}">
+            <image src="{{dishForm.image}}" mode="aspectFill" data-current="{{dishForm.image}}" bindtap="onPreviewImage" />
+            <view class="image-remove" bindtap="onRemoveDishImage">移除图片</view>
+          </view>
+          <view class="image-picker" wx:else bindtap="onDishImage">
+            <text class="image-plus">＋</text>
+            <text>添加原图（选填）</text>
+          </view>
+        </view>
+        <view class="form-row switch-row">
+          <text class="form-label">在 TA 的菜单中供应</text>
+          <switch checked="{{dishForm.available}}" color="#E0868F" bindchange="onDishAvailable" />
+        </view>
+        <view class="primary-btn {{working || uploading ? 'disabled' : ''}}" bindtap="onSubmitDish">保存菜单</view>
+      </block>
+
+      <block wx:if="{{sheet === 'cook'}}">
+        <view class="cook-dish-name">正在制作：{{cookForm.dishName}}</view>
+        <textarea
+          class="form-textarea tall"
+          value="{{cookForm.note}}"
+          maxlength="200"
+          placeholder="写一小段制作记录：用了什么、做得怎么样，或想对 TA 说的话（选填）"
+          placeholder-class="form-placeholder"
+          bindinput="onCookNote"
+        ></textarea>
+        <view class="cook-image-grid">
+          <view class="cook-image-item" wx:for="{{cookForm.images}}" wx:key="*this">
+            <image src="{{item}}" mode="aspectFill" data-images="{{cookForm.images}}" data-current="{{item}}" bindtap="onPreviewImage" />
+            <view class="cook-image-del" data-index="{{index}}" catchtap="onRemoveCookImage">✕</view>
+          </view>
+          <view class="cook-image-add" wx:if="{{cookForm.images.length < 9}}" bindtap="onCookImage">＋ 原图</view>
+        </view>
+        <view class="sheet-tip">可以只写一段话、只传一张图，也可以直接出餐。</view>
+        <view class="dual-actions">
+          <view class="secondary-btn" bindtap="onSaveCooking">保存制作</view>
+          <view class="primary-btn" bindtap="onServeOrder">完成出餐</view>
+        </view>
+      </block>
+
+      <block wx:if="{{sheet === 'review'}}">
+        <view class="review-dish">这次享用的是「{{reviewForm.dishName}}」</view>
+        <view class="rating-row">
+          <text
+            wx:for="{{stars}}"
+            wx:key="*this"
+            class="rating-star {{reviewForm.rating >= item ? 'on' : ''}}"
+            data-value="{{item}}"
+            bindtap="onPickRating"
+          >★</text>
+        </view>
+        <view class="rating-label">{{reviewForm.rating}} 星 · {{reviewForm.rating === 5 ? '超级满意' : reviewForm.rating >= 4 ? '很好吃' : reviewForm.rating >= 3 ? '还不错' : '下次继续加油'}}</view>
+        <textarea
+          class="form-textarea tall"
+          value="{{reviewForm.review}}"
+          maxlength="200"
+          placeholder="味道怎么样？给厨师留一句评价吧（选填）"
+          placeholder-class="form-placeholder"
+          bindinput="onReviewInput"
+        ></textarea>
+        <view class="primary-btn {{working ? 'disabled' : ''}}" bindtap="onSubmitReview">用餐完成，提交评价</view>
+      </block>
+    </view>
+  </view>
+</view>

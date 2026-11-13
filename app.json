@@ -1,7 +1,7 @@
 {
   "pages": [
     "pages/index/index",
-    "pages/stats/stats",
+    "pages/kitchen/kitchen",
     "pages/mine/mine"
   ],
   "window": {
@@ -22,8 +22,8 @@
         "text": "日常"
       },
       {
-        "pagePath": "pages/stats/stats",
-        "text": "统计"
+        "pagePath": "pages/kitchen/kitchen",
+        "text": "御膳房"
       },
       {
         "pagePath": "pages/mine/mine",
